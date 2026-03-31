@@ -2,7 +2,7 @@
 
 [![NuGet](<https://img.shields.io/nuget/v/DevToys.JsonToGo>)](<https://www.nuget.org/packages/DevToys.JsonToGo/>)
 
-The JSON to Go struct conversion tool for DevToys.
+A DevToys extension for converting JSON to Go structs.
 
 ## Installation
 
