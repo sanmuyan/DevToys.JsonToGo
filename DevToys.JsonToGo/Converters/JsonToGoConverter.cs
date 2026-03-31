@@ -10,6 +10,16 @@ public enum GoTypes
     Interface
 }
 
+public abstract class Mappings
+{
+    public static readonly Dictionary<GoTypes, string> TypeMappings = new()
+    {
+        [GoTypes.Any] = "any",
+        [GoTypes.StringPtr] = "*string",
+        [GoTypes.Interface] = "interface{}",
+    };
+}
+
 // 负责把 JSON 文本转换成 Go 类型定义。
 //
 // 整体流程分成两层：
@@ -20,12 +30,17 @@ public enum GoTypes
 // - JSON 解析逻辑和 Go 输出逻辑可以解耦。
 // - 后续如果要调整推断规则，只需要改 Schema 构建阶段。
 // - 后续如果要调整输出风格，只需要改渲染阶段。
-public sealed class JsonToGoConverter(string jsonText, string structName, GoTypes unknownTypeOption, bool enableOptionalField)
+public sealed class JsonToGoConverter(
+    string jsonText,
+    string structName,
+    GoTypes unknownTypeOption,
+    bool isEnableOptionalFields)
 {
     private readonly string _jsonText = jsonText;
     private readonly string _structName = structName;
     private readonly GoTypes _unknownTypeOption = unknownTypeOption;
-    private readonly bool _enableOptionalField = enableOptionalField;
+    private readonly bool _isEnableOptionalFields = isEnableOptionalFields;
+    private readonly Dictionary<GoTypes, string> _typeMappings = Mappings.TypeMappings;
 
     // 转换入口。
     // 先解析 JSON，再生成 Schema，最后渲染成 Go 类型定义。
@@ -217,7 +232,7 @@ public sealed class JsonToGoConverter(string jsonText, string structName, GoType
     // - any
     private string RenderGoType(SchemaNode schema, int indentLevel)
     {
-        var unknownType = UnknownTypeMapping[_unknownTypeOption];
+        var unknownType = _typeMappings[_unknownTypeOption];
         return schema.Kind switch
         {
             SchemaKind.String => "string",
@@ -226,7 +241,7 @@ public sealed class JsonToGoConverter(string jsonText, string structName, GoType
             SchemaKind.Float => "float64",
             SchemaKind.Array => "[]" + RenderGoType(schema.ItemSchema!, indentLevel),
             SchemaKind.Object => RenderStructType(schema.Properties!, indentLevel),
-            SchemaKind.Any => unknownType,
+            SchemaKind.Any =>  _unknownTypeOption  == GoTypes.StringPtr ? _typeMappings[GoTypes.Any] : unknownType,
             _ => unknownType
         };
     }
@@ -263,11 +278,12 @@ public sealed class JsonToGoConverter(string jsonText, string structName, GoType
 
         foreach ((string fieldName, string fieldType, string jsonPropertyName) in fields)
         {
-            string omitempty = "";
-            if (fieldType == UnknownTypeMapping[_unknownTypeOption] && _enableOptionalField)
+            string optionalTag = "";
+            if (fieldType == _typeMappings[_unknownTypeOption] && _isEnableOptionalFields)
             {
-                omitempty = ",omitempty";
+                optionalTag = ",omitempty";
             }
+
             builder.Append(fieldIndent)
                 .Append(fieldName.PadRight(maxFieldNameLength))
                 .Append(' ')
@@ -276,7 +292,7 @@ public sealed class JsonToGoConverter(string jsonText, string structName, GoType
                 .Append('`')
                 .Append("json:\"")
                 .Append(jsonPropertyName.Replace("\"", "\\\""))
-                .Append(omitempty)
+                .Append(optionalTag)
                 .Append("\"")
                 .Append('`')
                 .AppendLine();
@@ -416,11 +432,4 @@ public sealed class JsonToGoConverter(string jsonText, string structName, GoType
 
         public static SchemaNode Array(SchemaNode itemSchema) => new(SchemaKind.Array, itemSchema: itemSchema);
     }
-
-    public static Dictionary<GoTypes, string> UnknownTypeMapping = new()
-    {
-        [GoTypes.Any] = "any",
-        [GoTypes.StringPtr] = "*string",
-        [GoTypes.Interface] = "interface{}",
-    };
 }
