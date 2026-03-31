@@ -1,0 +1,44 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <!-- NuGet package -->
+        <IsPackable>true</IsPackable>
+        <Version>1.0.0</Version>
+        <Title>DevToys.JsonToGo</Title>
+        <Description>The JSON to Go struct conversion tool for DevToys.</Description>
+        <PackageProjectUrl>https://github.com/sanmuyan/DevToys.JsonToGo</PackageProjectUrl>
+        <RepositoryUrl>https://github.com/sanmuyan/DevToys.JsonToGo</RepositoryUrl>
+        <Authors>sanmuyan.com</Authors>
+        <PackageTags>devtoys-app devtoys extension json go struct converter json-to-go</PackageTags>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="DevToys.Api" Version="2.0.9-preview"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <EmbeddedResource Update="JsonToGoExtension.resx">
+            <Generator>ResXFileCodeGenerator</Generator>
+            <LastGenOutput>JsonToGoExtension.Designer.cs</LastGenOutput>
+        </EmbeddedResource>
+    </ItemGroup>
+
+    <ItemGroup>
+        <Compile Update="JsonToGoExtension.Designer.cs">
+            <DesignTime>True</DesignTime>
+            <AutoGen>True</AutoGen>
+            <DependentUpon>JsonToGoExtension.resx</DependentUpon>
+        </Compile>
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Include="$(RepoRoot)../LICENSE" Link="docs\LICENSE" Pack="true" PackagePath="\" />
+        <None Include="$(RepoRoot)../README.md" Link="docs\README.md" Pack="true" PackagePath="\" />
+    </ItemGroup>
+
+
+</Project>
